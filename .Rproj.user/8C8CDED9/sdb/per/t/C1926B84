@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(XML)\nlibrary(RCurl)\nlibrary(stringr)\nlibrary(ggplot2)\nlibrary(maptools)\nlibrary(rgeos)\nlibrary(ggmap)\nlibrary(plyr)\nlibrary(RJSONIO)\nlibrary(acs)\n\n#List of Counties around South Bend\ncntyList=c(\"St. Joseph\",\"Cass\")\n\n# get list of zips in the South Bend area\nzips=zipMap[zipMap$ctyname %in% cntyList,]\n\n# remove duplicates\nzips2=zips[!duplicated(zips$ZCTA5),]\nhead(zips2)\n\nzipShp <- rgdal::readOGR(\"cb_2015_us_zcta510_500k//cb_2015_us_zcta510_500k.shp\")\nzipShp2 <- zipShp[zipShp$ZCTA5CE10 %in% zips2$ZCTA5,]\nzipShp2 <- fortify(zipShp2,region=\"ZCTA5CE10\")\n\nx <- get_googlemap(center=\"south bend\",maptype=c(\"roadmap\"))\n\nmap <- ggmap(x)\nmap + geom_polygon(data=zipShp2, aes(x=long, y=lat, group=id), fill = \"blue\", color = \"black\", alpha = .2)\n\napi.key.install(\"4f56e4ff2ade70c0c3cc47779dd337334e6703d6\")\n\nhousehold_income <- acs.fetch(2015, geography = geo.make(zip.code = zips2$ZCTA5), table.number = \"B25119\")\nc(\"B25021\",\"B25037\",\"B25039\",\"B25119\",\"B25077\")\n",
+    "created" : 1488422254542.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3586568435",
+    "id" : "C1926B84",
+    "lastKnownWriteTime" : 1488431059,
+    "last_content_update" : 1488431059427,
+    "path" : "~/CensusData/PlotMaps.R",
+    "project_path" : "PlotMaps.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

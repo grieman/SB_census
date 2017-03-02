@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1488428660804.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "DCF2115F",
+    "lastKnownWriteTime" : 7517475801334839141,
+    "last_content_update" : 1488428660804,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "3A5A65B",
+        "caption" : "zipShp2",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=zipShp2&cache_key=3A5A65B",
+        "displayedObservations" : 23,
+        "environment" : "",
+        "object" : "zipShp2",
+        "preview" : 0,
+        "totalObservations" : 23,
+        "variables" : 6
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}
