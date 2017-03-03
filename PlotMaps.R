@@ -5,7 +5,7 @@ library(ggplot2)
 library(maptools)
 library(rgeos)
 library(ggmap)
-library(plyr)
+library(dplyr)
 library(RJSONIO)
 library(acs)
 
@@ -23,6 +23,7 @@ zipShp <- rgdal::readOGR("cb_2015_us_zcta510_500k//cb_2015_us_zcta510_500k.shp")
 zipShp2 <- zipShp[zipShp$ZCTA5CE10 %in% zips2$ZCTA5,]
 zipShp2 <- fortify(zipShp2,region="ZCTA5CE10")
 
+
 x <- get_googlemap(center="south bend",maptype=c("roadmap"))
 
 map <- ggmap(x)
@@ -32,3 +33,11 @@ api.key.install("4f56e4ff2ade70c0c3cc47779dd337334e6703d6")
 
 household_income <- acs.fetch(2015, geography = geo.make(zip.code = zips2$ZCTA5), table.number = "B25119")
 c("B25021","B25037","B25039","B25119","B25077")
+
+
+data <- cbind(household_income@geography[,2], household_income@estimate[,1]) %>% as.data.frame(); colnames(data) <- c("zip", "est")
+zip3 <- left_join(zipShp2, data, by = c("id"="zip")) 
+zip3$est %<>% as.character() %>% as.numeric %>% cut(5)
+
+map + geom_polygon(data=zip3, aes(x=long, y=lat, group=id, fill = est), alpha = .4) + 
+  scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
