@@ -8,6 +8,7 @@ library(ggmap)
 library(dplyr)
 library(RJSONIO)
 library(acs)
+library(reshape2)
 
 #List of Counties around South Bend
 cntyList=c("St. Joseph","Cass")
@@ -35,9 +36,34 @@ household_income <- acs.fetch(2015, geography = geo.make(zip.code = zips2$ZCTA5)
 c("B25021","B25037","B25039","B25119","B25077")
 
 
-data <- cbind(household_income@geography[,2], household_income@estimate[,1]) %>% as.data.frame(); colnames(data) <- c("zip", "est")
+data <- cbind(household_income@geography[,2], household_income@estimate %>% as.data.frame()) %>% as.data.frame(); colnames(data) <- c("zip", "est1","est2","est3")
+data[c(2:4)] %<>% sapply(as.numeric); data[c(1)] %<>% sapply(as.character)
 zip3 <- left_join(zipShp2, data, by = c("id"="zip")) 
-zip3$est %<>% as.character() %>% as.numeric %>% cut(5)
+zip3$est1 %<>% as.character() %>% as.numeric %>% cut(7)
 
-map + geom_polygon(data=zip3, aes(x=long, y=lat, group=id, fill = est), alpha = .4) + 
+map + geom_polygon(data=zip3, aes(x=long, y=lat, group=id, fill = est1), alpha = .4) + 
   scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
+
+
+
+
+devtools::install_github("dgrtwo/gganimate")
+library("gganimate")
+
+#https://www.imagemagick.org/script/download.php
+
+melted <- melt(data); colnames(melted) <- c("zips", "year", "value")
+zip4 <- left_join(zipShp2, melted, by = c("id"="zips")) 
+zip4$value %<>% cut(7)
+
+
+
+map2 <- ggplot(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = year), alpha = .4) + geom_polygon() +
+  scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
+ani.options(convert = shQuote('c:/program files/imagemagick/magick.exe'))
+gganimate(map2)
+
+
+
+
+
