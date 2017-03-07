@@ -9,6 +9,11 @@ library(dplyr)
 library(RJSONIO)
 library(acs)
 library(reshape2)
+library(magrittr)
+library(animation)
+library(gganimate)
+
+installr:::install.ImageMagick() #install convert
 
 #List of Counties around South Bend
 cntyList=c("St. Joseph","Cass")
@@ -58,12 +63,19 @@ zip4$value %<>% cut(7)
 
 
 
-map2 <- ggplot(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = year), alpha = .4) + geom_polygon() +
+map2 <- ggplot(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = year), color="#000000", alpha = .4) + geom_polygon() +
   scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
-ani.options(convert = shQuote('c:/program files/imagemagick/magick.exe'))
+#ani.options(convert = "C:\\Program Files\\ImageMagick-7.0.5-Q16\\convert.exe")
+#magickPath <- shortPathName("C:\\Program Files\\ImageMagick-7.0.3-Q16\\magick.exe")
+#ani.options(convert=magickPath)
+
+ani.options(autobrowse=FALSE, ani.width=480, ani.height=480)
 gganimate(map2)
 
 
 
 
 
+map3 <- ggmap(x) + geom_polygon(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = year), color="#000000", alpha = .4) +
+  scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
+map3
