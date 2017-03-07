@@ -12,8 +12,11 @@ library(reshape2)
 library(magrittr)
 library(animation)
 library(gganimate)
+<<<<<<< HEAD
 
 installr:::install.ImageMagick() #install convert
+=======
+>>>>>>> 67fdf27c36cf59e5424929c86a3ede8c5e27b596
 
 #List of Counties around South Bend
 cntyList=c("St. Joseph","Cass")
@@ -79,3 +82,5 @@ gganimate(map2)
 map3 <- ggmap(x) + geom_polygon(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = year), color="#000000", alpha = .4) +
   scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
 map3
+
+
