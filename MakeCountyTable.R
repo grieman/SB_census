@@ -26,7 +26,7 @@ for (i in 10:11){
 stateCntyCodes <- do.call("rbind", tabl) %>% subset(statecodes == "18")
 colnames(stateCntyCodes) <- c("fipstate","fipscty","ctyname")
 stateCntyCodes <- sapply(stateCntyCodes, as.character)
-stateCntyCodes <- rbind(stateCntyCodes, c("26","027","Cass")) %>% as.data.frame()
+stateCntyCodes <- rbind(stateCntyCodes, c("26","027","CassMI")) %>% as.data.frame()
 stateCntyCodes <- sapply(stateCntyCodes, as.factor) %>% as.data.frame()
 
 
