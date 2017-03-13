@@ -13,7 +13,7 @@ library(magrittr)
 library(animation)
 library(gganimate)
 
-installr:::install.ImageMagick() #install convert
+#installr:::install.ImageMagick() #install convert
 
 # List of Counties around South Bend
 cntyList=c("St. Joseph","CassMI")
@@ -52,18 +52,18 @@ map + geom_polygon(data=zip3, aes(x=long, y=lat, group=id, fill = est1), alpha =
 
 
 
-devtools::install_github("dgrtwo/gganimate")
+#devtools::install_github("dgrtwo/gganimate")
 library("gganimate")
 
 #https://www.imagemagick.org/script/download.php
 
 melted <- melt(data); colnames(melted) <- c("zips", "year", "value")
 zip4 <- left_join(zipShp2, melted, by = c("id"="zips")) 
-zip4$value %<>% cut(7)
+zip4$value %<>% cut(9)
 
 
 
-map2 <- ggplot(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = year), color="#000000", alpha = .4) + geom_polygon() +
+map2 <- ggplot(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = year), alpha = .4) + geom_polygon(color="#000000") +
   scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
 #ani.options(convert = "C:\\Program Files\\ImageMagick-7.0.5-Q16\\convert.exe")
 #magickPath <- shortPathName("C:\\Program Files\\ImageMagick-7.0.3-Q16\\magick.exe")
