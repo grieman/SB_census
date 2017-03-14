@@ -67,7 +67,7 @@ map2 <- ggplot(data=zip4, aes(x=long, y=lat, group=id, fill = value, frame = yea
   scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
 #ani.options(convert = "C:\\Program Files\\ImageMagick-7.0.5-Q16\\convert.exe")
 #magickPath <- shortPathName("C:\\Program Files\\ImageMagick-7.0.3-Q16\\magick.exe")
-#ani.options(convert=magickPath)
+#ani.options(convert=magickPath)r acs p
 
 ani.options(autobrowse=FALSE, ani.width=480, ani.height=480)
 gganimate(map2)
@@ -80,4 +80,6 @@ map3 <- ggmap(x) + geom_polygon(data=zip4, aes(x=long, y=lat, group=id, fill = v
   scale_fill_brewer(type="seq", palette="YlGnBu", direction = 1)
 map3
 
-
+income<-acs.fetch(endyear = 2012, span = 5, geography = geo.make(zip.code = zips2$ZCTA5),
+                  table.number = "B19001", col.names = "pretty")
+#http://zevross.com/blog/2015/10/14/manipulating-and-mapping-us-census-data-in-r-using-the-acs-tigris-and-leaflet-packages-3/
