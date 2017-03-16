@@ -19,7 +19,8 @@ shinyServer(function(input, output) {
     split_counties <- split(countiesdf, countiesdf$states)
     
     split_counties %<>% lapply(function(x){
-      tracts(state=x$states[1], county=x$counties, cb=TRUE)
+      tracts(state=as.character(x$states[1]),
+             county=as.character(x$counties), cb=TRUE)
     })
     
     rbind_tigris(split_counties)
@@ -34,16 +35,20 @@ shinyServer(function(input, output) {
       split_counties <- split(countiesdf, countiesdf$states)
       
       split_counties %<>% lapply(function(x){
-        geo.make(state=x$states[1], county=x$counties, tract="*")
+        geo.make(state=as.character(x$states[1]),
+                 county=as.character(x$counties), tract="*")
       })
       
       geodata <- split_counties[[1]]
       
-      #if(length(split_counties > 1)){
-      #  for (i in 2:length(split_counties)){
-      #    geodata <- geodata + splitcounties[[i]]
-      #  }
-      #}
+      if(length(split_counties) > 1){
+        for (i in 2:length(split_counties)){
+          if (i==2){geodata <- split_counties[[1]] + split_counties[[2]]}
+          else {geodata <- geodata + split_counties[[i]]}
+        }
+      }
+      
+      return(geodata)
   })
   
   income_merged <- eventReactive(input$GetData, {
@@ -51,23 +56,25 @@ shinyServer(function(input, output) {
     #this always returns autauga AL
     income <- acs.fetch(endyear = 2012, span = 5, geography = geodata, table.number = "B19001", col.names = "pretty")
   
+    above150K <- rowSums(income@estimate[,16:17])
+    
     income_df <- data.frame(paste0(str_pad(income@geography$state, 2, "left", pad="0"), 
                                    str_pad(income@geography$county, 3, "left", pad="0"), 
                                    str_pad(income@geography$tract, 6, "left", pad="0")), 
-                            income@estimate[,c("Household Income: Total:",
-                                               "Household Income: $200,000 or more")], 
+                            income@estimate[,c("Household Income: Total:")],
+                            above150K, 
                             stringsAsFactors = FALSE)
     
     income_df <- select(income_df, 1:3)
     rownames(income_df)<-1:nrow(income_df)
-    names(income_df)<-c("GEOID", "total", "over_200")
-    income_df$percent <- 100*(income_df$over_200/income_df$total)
+    names(income_df)<-c("GEOID", "total", "over_150")
+    income_df$percent <- 100*(income_df$over_150/income_df$total)
     income_merged<- geo_join(spatialdata, income_df, "GEOID", "GEOID")
     income_merged[income_merged$ALAND>0,]  
   })
   
   popup <- eventReactive(input$GetData, {
-    paste0("GEOID: ", income_merged()$GEOID, "<br>", "Percent of Households above $200k: ", round(income_merged()$percent,2))
+    paste0("GEOID: ", income_merged()$GEOID, "<br>", "Percent of Households above $150k: ", round(income_merged()$percent,2))
   })
   
   pal <- eventReactive(input$GetData, {
@@ -84,14 +91,14 @@ shinyServer(function(input, output) {
       addPolygons(data = income_merged(), 
                   fillColor = ~pal()(percent), 
                   color = "#b2aeae", # you need to use hex colors
-                  fillOpacity = 0.7, 
+                  fillOpacity = 0.6, 
                   weight = 1, 
                   smoothFactor = 0.2,
                   popup = popup()) %>%
       addLegend(pal = pal(), 
                 values = income_merged()$percent, 
                 position = "bottomright", 
-                title = "Percent of Households<br>above $200k",
+                title = "Percent of Households<br>above $150k",
                 labFormat = labelFormat(suffix = "%"))
   })
   

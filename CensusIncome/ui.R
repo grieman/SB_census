@@ -26,7 +26,7 @@ Sidebar <- dashboardSidebar(
 )
 
 Body <- dashboardBody(
-  leafletOutput("map", height="600px")
+  leafletOutput("map", height="850px")
 )
 
 
