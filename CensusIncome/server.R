@@ -54,7 +54,8 @@ shinyServer(function(input, output, session) {
   
   income_df <- eventReactive(input$GetData, {
     geodata <- geodata(); spatialdata <- spatialdata();
-    income <- acs.fetch(endyear = 2012, span = 5, geography = geodata, table.number = "B19001", col.names = "pretty")
+    #change data to change data's year
+    income <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B19001", col.names = "pretty")
   
     above150K <- rowSums(income@estimate[,16:17])
     
@@ -64,6 +65,16 @@ shinyServer(function(input, output, session) {
                             income@estimate,
                             above150K, 
                             stringsAsFactors = FALSE)
+  })
+  
+  income_df_lag1 <- eventReactive(input$GetData, {
+    geodata <- geodata(); spatialdata <- spatialdata();
+    #change data to change data's year
+    income <- acs.fetch(endyear = 2015-1, span = 5, geography = geodata, table.number = "B19001", col.names = "pretty")
+    income_df <- data.frame(paste0(str_pad(income@geography$state, 2, "left", pad="0"), 
+                                   str_pad(income@geography$county, 3, "left", pad="0"), 
+                                   str_pad(income@geography$tract, 6, "left", pad="0")), 
+                                  income@estimate,stringsAsFactors = FALSE)
   })
     
   income_merged <- eventReactive(input$GetData, {
@@ -109,7 +120,6 @@ shinyServer(function(input, output, session) {
   #### Click Map ####
   observeEvent(input$map_shape_click, { # update the location selectInput on map clicks
     p <- input$map_shape_click$id
-    
   })
   
   
