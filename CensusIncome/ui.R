@@ -6,6 +6,8 @@ library(acs)
 library(dplyr)
 require(shinyjs)
 library(magrittr)
+library(ggplot2)
+
 
 statedfs <- list()
 for (i in 1:50){
@@ -26,7 +28,10 @@ Sidebar <- dashboardSidebar(
 )
 
 Body <- dashboardBody(
-  leafletOutput("map", height="850px")
+  br(),
+  column(8,leafletOutput("map", height="600px")),
+  column(4,br(),br(),br(),br(),plotOutput("plot", height="300px")),
+  br()
 )
 
 
