@@ -124,7 +124,7 @@ shinyServer(function(input, output, session) {
     data$order <- 1:length(data$bin)
     data %>% 
       ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col() + 
-      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 90, hjust = 1))
+      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 70, hjust = 1))
   })
   
   
