@@ -67,6 +67,25 @@ shinyServer(function(input, output, session) {
                             stringsAsFactors = FALSE)
   })
   
+  edu_df <- eventReactive(input$GetData, {
+    geodata <- geodata(); spatialdata <- spatialdata();
+    edu <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B15001", col.names = "pretty")
+    edu_df <- data.frame(paste0(str_pad(edu@geography$state, 2, "left", pad="0"), 
+                                str_pad(edu@geography$county, 3, "left", pad="0"), 
+                                str_pad(edu@geography$tract, 6, "left", pad="0")), 
+                            edu@estimate, stringsAsFactors = FALSE)
+    edu_df$Male..Less.than.9th.grade <- sum(edu_df[c(5,13,21,29,37)])
+  })
+  
+#  hhs_df <- eventReactive(input$GetData, {
+#    geodata <- geodata(); spatialdata <- spatialdata();
+#    hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25010", col.names = "pretty")    
+#    hhs_df <- data.frame(paste0(str_pad(hhs@geography$state, 2, "left", pad="0"), 
+#                                str_pad(hhs@geography$county, 3, "left", pad="0"), 
+#                                str_pad(hhs@geography$tract, 6, "left", pad="0")), 
+#                         hhs@estimate, stringsAsFactors = FALSE)
+#  })
+  
   income_merged <- eventReactive(input$GetData, {
     spatialdata <- spatialdata(); income_df2 <- income_df()
     #income_df2 <- select(income_df, c(1,2,19))
@@ -125,6 +144,18 @@ shinyServer(function(input, output, session) {
     data %>% 
       ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col() + 
       theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 70, hjust = 1))
+  })
+  
+#  output$plot_housing=renderPlot({
+#    p <- input$map_shape_click$id
+#    if(is.null(p)){p=income_merged()$GEOID[1]}
+#    
+#  })
+  
+  output$plot_education=renderPlot({
+    p <- input$map_shape_click$id
+    if(is.null(p)){p=income_merged()$GEOID[1]}
+    
   })
   
   
