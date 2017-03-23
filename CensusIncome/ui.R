@@ -8,7 +8,6 @@ require(shinyjs)
 library(magrittr)
 library(ggplot2)
 
-
 statedfs <- list()
 for (i in 1:50){
   statedfs[[i]] <- list_counties(state.abb[i])
@@ -29,7 +28,7 @@ Sidebar <- dashboardSidebar(
 
 Body <- dashboardBody(
   box(width=NULL,
-      leafletOutput("map", height="500")
+          leafletOutput("map", height="500")
   ),
   fluidRow(
     column(width=4,plotOutput("plot")),

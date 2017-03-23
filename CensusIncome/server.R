@@ -11,6 +11,13 @@ library(reshape2)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   
+  progress <- shiny::Progress$new()
+  
+  observeEvent(input$GetData,{
+    shinyjs::addClass(selector = "body", class = "sidebar-collapse")
+    progress$set(message = "Getting data", value = 0)
+  })
+  
   
   spatialdata <- eventReactive(input$GetData, {
     counties <- input$counties
@@ -49,7 +56,7 @@ shinyServer(function(input, output, session) {
           else {geodata <- geodata + split_counties[[i]]}
         }
       }
-      
+      progress$inc(.1, detail = paste("Geography defined"))
       return(geodata)
   })
   
@@ -57,6 +64,7 @@ shinyServer(function(input, output, session) {
     geodata <- geodata(); spatialdata <- spatialdata();
     #change data to change data's year
     income <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B19001", col.names = "pretty")
+    progress$inc(.3, detail = paste("Income data gathered"))
   
     above150K <- rowSums(income@estimate[,16:17])
     
@@ -71,7 +79,8 @@ shinyServer(function(input, output, session) {
   edu_df <- eventReactive(input$GetData, {
     geodata <- geodata(); spatialdata <- spatialdata();
     edu <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B15001", col.names = "pretty")
-
+    progress$inc(.3, detail = paste("Education data gathered"))
+    
     gender <- list()
     gender[[1]] <- as.data.frame(edu@estimate)[c(grep("Female", colnames(edu@estimate)))]
     gender[[2]] <- as.data.frame(edu@estimate)[c(grep("Male", colnames(edu@estimate)))]
@@ -106,6 +115,7 @@ shinyServer(function(input, output, session) {
   hhs_df <- eventReactive(input$GetData, {
     geodata <- geodata(); spatialdata <- spatialdata();
     hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25009", col.names = "pretty")
+    progress$inc(.3, detail = paste("Housing data gathered"))
     
     ownership <- list()
     ownership[[1]] <- as.data.frame(hhs@estimate)[c(3:9)]
@@ -180,7 +190,7 @@ shinyServer(function(input, output, session) {
     data <- data[-c(1,2)] %>% t() %>% as.data.frame()
     colnames(data) <- c("Percentage")
     data$bin <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999") %>% as.factor()
-    data$order <- 1:length(data$bin)
+    data$order <- 1:(length(data$bin))
     data %>% 
       ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col() + 
       theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))
@@ -220,13 +230,12 @@ shinyServer(function(input, output, session) {
       scale_fill_manual(values = c("#9F79EE", "#66CDAA"))
   })
   
-  
+ 
+  session$onSessionEnded(stopApp)  
+   
 })
 
 
 
 # household size
 # hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25010", col.names = "pretty")
-
-hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25009", col.names = "pretty")
-hhs@estimate %>% colnames
