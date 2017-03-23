@@ -8,6 +8,7 @@ require(shinyjs)
 library(magrittr)
 library(ggplot2)
 
+
 statedfs <- list()
 for (i in 1:50){
   statedfs[[i]] <- list_counties(state.abb[i])

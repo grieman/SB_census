@@ -8,6 +8,14 @@ library(magrittr)
 library(ggplot2)
 library(reshape2)
 
+theme_GR <- function(){
+  ggplot2::theme(axis.line = ggplot2::element_line(linetype = "solid"),
+                 panel.grid.major = ggplot2::element_line(colour = "gray80"),
+                 panel.grid.minor = ggplot2::element_line(colour = "gray90",
+                                                          linetype = "dashed"), panel.background = ggplot2::element_rect(fill = NA),
+                 legend.direction = 'horizontal', legend.position = 'bottom')
+}
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   
@@ -193,7 +201,8 @@ shinyServer(function(input, output, session) {
     data$order <- 1:(length(data$bin))
     data %>% 
       ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col() + 
-      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))
+      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) + 
+      scale_fill_manual(values = c("#7CCD7C")) + theme_GR()
   })
   
 #  output$plot_housing=renderPlot({
@@ -213,7 +222,7 @@ shinyServer(function(input, output, session) {
     melted %>% 
       ggplot(aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
       theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
-      scale_fill_manual(values = c("pink", "steelblue1"))
+      scale_fill_manual(values = c("pink", "steelblue1")) + theme_GR()
   })
   
   output$plot_housing=renderPlot({
@@ -227,7 +236,7 @@ shinyServer(function(input, output, session) {
     melted %>% 
       ggplot(aes(x=variable, y=value, fill = ownership)) + geom_col(position = "dodge") + 
       theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
-      scale_fill_manual(values = c("#9F79EE", "#66CDAA"))
+      scale_fill_manual(values = c("#9F79EE", "#66CDAA")) + theme_GR()
   })
   
  
