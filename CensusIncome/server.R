@@ -87,7 +87,8 @@ shinyServer(function(input, output, session) {
       for (j in 1:7){
         educlass[[j]] %<>% rowSums()
       }
-      gender[[i]] <- do.call("rbind", educlass) %>% t %>% as.data.frame
+      gender[[i]] <- do.call("rbind", educlass) %>% t
+      gender[[i]] %<>% prop.table(1) %>% as.data.frame
       colnames(gender[[i]]) <- c("No High School", "Some High School", "High School", "Some College", "Associate's", "Bachelor's", "Postgraduate")
       gender[[i]]$gender <- ifelse(i==1, "Female", "Male")
     }
@@ -102,14 +103,32 @@ shinyServer(function(input, output, session) {
     return(edu_df)
   })
   
-#  hhs_df <- eventReactive(input$GetData, {
-#    geodata <- geodata(); spatialdata <- spatialdata();
-#    hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25010", col.names = "pretty")    
-#    hhs_df <- data.frame(paste0(str_pad(hhs@geography$state, 2, "left", pad="0"), 
-#                                str_pad(hhs@geography$county, 3, "left", pad="0"), 
-#                                str_pad(hhs@geography$tract, 6, "left", pad="0")), 
-#                         hhs@estimate, stringsAsFactors = FALSE)
-#  })
+  hhs_df <- eventReactive(input$GetData, {
+    geodata <- geodata(); spatialdata <- spatialdata();
+    hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25009", col.names = "pretty")
+    
+    ownership <- list()
+    ownership[[1]] <- as.data.frame(hhs@estimate)[c(3:9)]
+    ownership[[2]] <- as.data.frame(hhs@estimate)[c(11:17)]
+    
+    totals <- (ownership[[1]] + ownership[[2]]) %>% rowSums(1)
+
+    
+    for (i in 1:2){
+      colnames(ownership[[i]]) %<>% strsplit("occupied: ") %>% lapply('[[',2) %>% unlist
+      ownership[[i]] <- ownership[[i]] / totals
+      ownership[[i]]$ownership <- ifelse(i==1, "Owner", "Renter")
+    }
+    names <- colnames(ownership[[1]])
+    hhs_df <- data.frame(paste0(str_pad(hhs@geography$state, 2, "left", pad="0"), 
+                                str_pad(hhs@geography$county, 3, "left", pad="0"), 
+                                str_pad(hhs@geography$tract, 6, "left", pad="0")),
+                         do.call("rbind", ownership),
+                         stringsAsFactors = FALSE)
+    colnames(hhs_df)[1] <- "GEOID"; colnames(hhs_df)[-c(1)] <- names
+    rownames(hhs_df)<-1:nrow(hhs_df)
+    return(hhs_df)
+  })
   
   income_merged <- eventReactive(input$GetData, {
     spatialdata <- spatialdata(); income_df2 <- income_df()
@@ -132,7 +151,6 @@ shinyServer(function(input, output, session) {
     )
   })
   
-  
   output$map <- renderLeaflet({
     leaflet() %>%
       addProviderTiles("CartoDB.Positron") %>%
@@ -150,12 +168,9 @@ shinyServer(function(input, output, session) {
       #          labFormat = labelFormat(suffix = "%"))
   })
   
-  
-  #### Click Map ####
   observeEvent(input$map_shape_click, { # update the location selectInput on map clicks
     p <- input$map_shape_click$id
   })
-  
   
   output$plot=renderPlot({
     p <- input$map_shape_click$id
@@ -168,7 +183,7 @@ shinyServer(function(input, output, session) {
     data$order <- 1:length(data$bin)
     data %>% 
       ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col() + 
-      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 70, hjust = 1))
+      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1))
   })
   
 #  output$plot_housing=renderPlot({
@@ -180,7 +195,6 @@ shinyServer(function(input, output, session) {
   output$plot_education=renderPlot({
     p <- input$map_shape_click$id
     if(is.null(p)){p=income_merged()$GEOID[1]}
-    #data <- edu_df() %>% subset("GEOID" == p) %>% as.data.frame()
     data <- edu_df()[which(edu_df()$GEOID == p),]
     data <- data[-c(1)]
     
@@ -188,8 +202,22 @@ shinyServer(function(input, output, session) {
     
     melted %>% 
       ggplot(aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
-      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 70, hjust = 1)) +
+      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
       scale_fill_manual(values = c("pink", "steelblue1"))
+  })
+  
+  output$plot_housing=renderPlot({
+    p <- input$map_shape_click$id
+    if(is.null(p)){p=income_merged()$GEOID[1]}
+    data <- hhs_df()[which(hhs_df()$GEOID == p),]
+    data <- data[-c(1)]
+    
+    melted <- melt(data, id.vars = "ownership")
+    
+    melted %>% 
+      ggplot(aes(x=variable, y=value, fill = ownership)) + geom_col(position = "dodge") + 
+      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
+      scale_fill_manual(values = c("#9F79EE", "#66CDAA"))
   })
   
   
@@ -197,7 +225,8 @@ shinyServer(function(input, output, session) {
 
 
 
-# education by age
-# edu <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B15001", col.names = "pretty")
 # household size
 # hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25010", col.names = "pretty")
+
+hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25009", col.names = "pretty")
+hhs@estimate %>% colnames

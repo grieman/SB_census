@@ -21,34 +21,27 @@ Header <- dashboardHeader(
   
 )
 
-Sidebar <- dashboardSidebar(disable=TRUE)
+Sidebar <- dashboardSidebar(
+  useShinyjs(),
+  selectizeInput("counties", "Select Counties:", all_counties, multiple=TRUE),
+  actionButton("GetData", "Get Data")
+)
 
 Body <- dashboardBody(
+  box(width=NULL,
+      leafletOutput("map", height="500")
+  ),
   fluidRow(
-    column(width=3,
-           box(width = NULL, 
-               useShinyjs(),
-               selectizeInput("counties", "Select Counties:", all_counties, multiple=TRUE),
-               actionButton("GetData", "Get Data")
-               )
-           ), 
-    column(width=9,
-            box(width=NULL,
-                leafletOutput("map", height="500")
-                ),
-            fluidRow(
-              box(
-                plotOutput("plot", height="300")
-              ),
-              box(plotOutput("plot_education", height="300"))
-            )
-          )
+    column(width=4,plotOutput("plot")),
+    column(width=4,plotOutput("plot_education")),
+    column(width=4,plotOutput("plot_housing"))
   )
+)
 #  br(),
 #  column(8,leafletOutput("map", height="600px")),
 #  column(4,br(),br(),br(),br(),plotOutput("plot", height="300px")),
 #  br()
-)
+
 
 
 
