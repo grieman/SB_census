@@ -40,8 +40,7 @@ Body <- dashboardBody(
               box(
                 plotOutput("plot", height="300")
               ),
-              box(),
-              box()
+              box(plotOutput("plot_education", height="300"))
             )
           )
   )

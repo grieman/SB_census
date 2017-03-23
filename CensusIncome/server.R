@@ -6,6 +6,7 @@ library(dplyr)
 require(shinyjs)
 library(magrittr)
 library(ggplot2)
+library(reshape2)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
@@ -70,11 +71,35 @@ shinyServer(function(input, output, session) {
   edu_df <- eventReactive(input$GetData, {
     geodata <- geodata(); spatialdata <- spatialdata();
     edu <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B15001", col.names = "pretty")
+
+    gender <- list()
+    gender[[1]] <- as.data.frame(edu@estimate)[c(grep("Female", colnames(edu@estimate)))]
+    gender[[2]] <- as.data.frame(edu@estimate)[c(grep("Male", colnames(edu@estimate)))]
+    for (i in 1:2){
+      educlass <- list()
+      educlass[[1]] <- gender[[i]][c(grep("Less", colnames(gender[[i]])))]
+      educlass[[2]] <- gender[[i]][c(grep("no diploma", colnames(gender[[i]])))]
+      educlass[[3]] <- gender[[i]][c(grep("High school", colnames(gender[[i]])))]
+      educlass[[4]] <- gender[[i]][c(grep("Some college", colnames(gender[[i]])))]
+      educlass[[5]] <- gender[[i]][c(grep("Associate", colnames(gender[[i]])))]
+      educlass[[6]] <- gender[[i]][c(grep("Bachelor", colnames(gender[[i]])))]
+      educlass[[7]] <- gender[[i]][c(grep("professional", colnames(gender[[i]])))]
+      for (j in 1:7){
+        educlass[[j]] %<>% rowSums()
+      }
+      gender[[i]] <- do.call("rbind", educlass) %>% t %>% as.data.frame
+      colnames(gender[[i]]) <- c("No High School", "Some High School", "High School", "Some College", "Associate's", "Bachelor's", "Postgraduate")
+      gender[[i]]$gender <- ifelse(i==1, "Female", "Male")
+    }
+    
     edu_df <- data.frame(paste0(str_pad(edu@geography$state, 2, "left", pad="0"), 
                                 str_pad(edu@geography$county, 3, "left", pad="0"), 
-                                str_pad(edu@geography$tract, 6, "left", pad="0")), 
-                            edu@estimate, stringsAsFactors = FALSE)
-    edu_df$Male..Less.than.9th.grade <- sum(edu_df[c(5,13,21,29,37)])
+                                str_pad(edu@geography$tract, 6, "left", pad="0")),
+                         do.call("rbind", gender),
+                         stringsAsFactors = FALSE)
+    colnames(edu_df)[1] <- "GEOID"
+    rownames(edu_df)<-1:nrow(edu_df)
+    return(edu_df)
   })
   
 #  hhs_df <- eventReactive(input$GetData, {
@@ -155,7 +180,16 @@ shinyServer(function(input, output, session) {
   output$plot_education=renderPlot({
     p <- input$map_shape_click$id
     if(is.null(p)){p=income_merged()$GEOID[1]}
+    #data <- edu_df() %>% subset("GEOID" == p) %>% as.data.frame()
+    data <- edu_df()[which(edu_df()$GEOID == p),]
+    data <- data[-c(1)]
     
+    melted <- melt(data, id.vars = "gender")
+    
+    melted %>% 
+      ggplot(aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
+      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 70, hjust = 1)) +
+      scale_fill_manual(values = c("pink", "steelblue1"))
   })
   
   
