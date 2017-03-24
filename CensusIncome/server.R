@@ -155,6 +155,7 @@ shinyServer(function(input, output, session) {
     names(income_df2)[c(1,2,19)] <-c("GEOID", "total", "over_150")
     income_df2$percent <- 100*(income_df2$over_150/income_df2$total)
     income_merged<- geo_join(spatialdata, income_df2, "GEOID", "GEOID")
+    progress$close()
     income_merged[income_merged$ALAND>0,]  
   })
   
@@ -200,16 +201,11 @@ shinyServer(function(input, output, session) {
     data$bin <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999") %>% as.factor()
     data$order <- 1:(length(data$bin))
     data %>% 
-      ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col() + 
+      ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col(fill = "chartreuse4") + 
       theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) + 
-      scale_fill_manual(values = c("#7CCD7C")) + theme_GR()
+      theme_GR()
   })
   
-#  output$plot_housing=renderPlot({
-#    p <- input$map_shape_click$id
-#    if(is.null(p)){p=income_merged()$GEOID[1]}
-#    
-#  })
   
   output$plot_education=renderPlot({
     p <- input$map_shape_click$id
