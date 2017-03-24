@@ -7,6 +7,7 @@ require(shinyjs)
 library(magrittr)
 library(ggplot2)
 library(reshape2)
+library(plotly)
 
 theme_GR <- function(){
   ggplot2::theme(axis.line = ggplot2::element_line(linetype = "solid"),
@@ -155,7 +156,6 @@ shinyServer(function(input, output, session) {
     names(income_df2)[c(1,2,19)] <-c("GEOID", "total", "over_150")
     income_df2$percent <- 100*(income_df2$over_150/income_df2$total)
     income_merged<- geo_join(spatialdata, income_df2, "GEOID", "GEOID")
-    progress$close()
     income_merged[income_merged$ALAND>0,]  
   })
   
@@ -171,6 +171,12 @@ shinyServer(function(input, output, session) {
   })
   
   output$map <- renderLeaflet({
+    req(income_merged())
+    req(edu_df())
+    req(hhs_df())
+    progress$close()
+    
+    
     leaflet() %>%
       addProviderTiles("CartoDB.Positron") %>%
       addPolygons(data = income_merged(), 
@@ -191,7 +197,7 @@ shinyServer(function(input, output, session) {
     p <- input$map_shape_click$id
   })
   
-  output$plot=renderPlot({
+  output$plot=renderPlotly({
     p <- input$map_shape_click$id
     if(is.null(p)){p=income_merged()$GEOID[1]}
     data <- income_merged()[c(5,11:26)] %>% subset(GEOID == p) %>% as.data.frame()
@@ -199,29 +205,40 @@ shinyServer(function(input, output, session) {
     data <- data[-c(1,2)] %>% t() %>% as.data.frame()
     colnames(data) <- c("Percentage")
     data$bin <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999") %>% as.factor()
+    #data$order <- 1:(length(data$bin))
+    #data %>% 
+    #  ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col(fill = "chartreuse4") + 
+    #  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) + 
+    #  theme_GR()
     data$order <- 1:(length(data$bin))
+    
     data %>% 
-      ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col(fill = "chartreuse4") + 
-      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) + 
-      theme_GR()
+      plot_ly(x=~reorder(bin, order), y=~Percentage, type="bar", name="Income")
   })
   
   
-  output$plot_education=renderPlot({
+  output$plot_education=renderPlotly({
     p <- input$map_shape_click$id
     if(is.null(p)){p=income_merged()$GEOID[1]}
+    data <- NULL
     data <- edu_df()[which(edu_df()$GEOID == p),]
     data <- data[-c(1)]
     
     melted <- melt(data, id.vars = "gender")
     
-    melted %>% 
-      ggplot(aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
-      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
-      scale_fill_manual(values = c("pink", "steelblue1")) + theme_GR()
+    #melted %>% 
+    #  ggplot(aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
+    #  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
+    #  scale_fill_manual(values = c("pink", "steelblue1")) + theme_GR()
+    
+    castdata <- dcast(melted, variable~gender)
+    
+    plot_ly(castdata, x= ~variable, y= ~Male, type='bar', name="Male") %>%
+      add_trace(y= ~Female, name= "Female" ) %>% 
+      layout(yaxis = list(title = 'Count'), barmode = 'group')
   })
   
-  output$plot_housing=renderPlot({
+  output$plot_housing=renderPlotly({
     p <- input$map_shape_click$id
     if(is.null(p)){p=income_merged()$GEOID[1]}
     data <- hhs_df()[which(hhs_df()$GEOID == p),]
@@ -229,10 +246,17 @@ shinyServer(function(input, output, session) {
     
     melted <- melt(data, id.vars = "ownership")
     
-    melted %>% 
-      ggplot(aes(x=variable, y=value, fill = ownership)) + geom_col(position = "dodge") + 
-      theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
-      scale_fill_manual(values = c("#9F79EE", "#66CDAA")) + theme_GR()
+    #melted %>% 
+    #  ggplot(aes(x=variable, y=value, fill = ownership)) + geom_col(position = "dodge") + 
+    #  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
+    #  scale_fill_manual(values = c("#9F79EE", "#66CDAA")) + theme_GR()
+    
+    castdata <- dcast(melted, variable~ownership)
+    
+    
+    plot_ly(castdata, x= ~variable, y= ~Owner, type='bar', name="Owner") %>%
+      add_trace(y= ~Renter, name= "Renter" ) %>% 
+      layout(yaxis = list(title = 'Count'), barmode = 'group')
   })
   
  

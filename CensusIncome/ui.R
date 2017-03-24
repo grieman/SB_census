@@ -7,6 +7,7 @@ library(dplyr)
 require(shinyjs)
 library(magrittr)
 library(ggplot2)
+library(plotly)
 
 
 statedfs <- list()
@@ -32,9 +33,9 @@ Body <- dashboardBody(
           leafletOutput("map", height="500")
   ),
   fluidRow(
-    column(width=4,plotOutput("plot")),
-    column(width=4,plotOutput("plot_education")),
-    column(width=4,plotOutput("plot_housing"))
+    column(width=4,plotlyOutput("plot")),
+    column(width=4,plotlyOutput("plot_education")),
+    column(width=4,plotlyOutput("plot_housing"))
   )
 )
 #  br(),
