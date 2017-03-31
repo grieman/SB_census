@@ -33,15 +33,11 @@ Body <- dashboardBody(
           leafletOutput("map", height="500")
   ),
   fluidRow(
-    column(width=4,plotlyOutput("plot")),
-    column(width=4,plotlyOutput("plot_education")),
-    column(width=4,plotlyOutput("plot_housing"))
+    column(width=4,plotOutput("plot")),
+    column(width=4,plotOutput("plot_education")),
+    column(width=4,plotOutput("plot_housing"))
   )
 )
-#  br(),
-#  column(8,leafletOutput("map", height="600px")),
-#  column(4,br(),br(),br(),br(),plotOutput("plot", height="300px")),
-#  br()
 
 
 

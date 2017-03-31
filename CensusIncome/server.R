@@ -194,69 +194,63 @@ shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$map_shape_click, { # update the location selectInput on map clicks
-    p <- input$map_shape_click$id
-  })
-  
-  output$plot=renderPlotly({
-    p <- input$map_shape_click$id
-    if(is.null(p)){p=income_merged()$GEOID[1]}
-    data <- income_merged()[c(5,11:26)] %>% subset(GEOID == p) %>% as.data.frame()
-    data[c(3:17)] <- data[c(3:17)] / data$total
-    data <- data[-c(1,2)] %>% t() %>% as.data.frame()
-    colnames(data) <- c("Percentage")
-    data$bin <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999") %>% as.factor()
-    #data$order <- 1:(length(data$bin))
-    #data %>% 
-    #  ggplot(aes(x=reorder(bin, order), y=Percentage)) + geom_col(fill = "chartreuse4") + 
-    #  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) + 
-    #  theme_GR()
-    data$order <- 1:(length(data$bin))
-    
-    data %>% 
-      plot_ly(x=~reorder(bin, order), y=~Percentage, type="bar", name="Income")
-  })
-  
-  
-  output$plot_education=renderPlotly({
-    p <- input$map_shape_click$id
-    if(is.null(p)){p=income_merged()$GEOID[1]}
-    data <- NULL
-    data <- edu_df()[which(edu_df()$GEOID == p),]
-    data <- data[-c(1)]
-    
-    melted <- melt(data, id.vars = "gender")
-    
-    #melted %>% 
-    #  ggplot(aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
-    #  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
-    #  scale_fill_manual(values = c("pink", "steelblue1")) + theme_GR()
-    
-    castdata <- dcast(melted, variable~gender)
-    
-    plot_ly(castdata, x= ~variable, y= ~Male, type='bar', name="Male") %>%
-      add_trace(y= ~Female, name= "Female" ) %>% 
-      layout(yaxis = list(title = 'Count'), barmode = 'group')
-  })
-  
-  output$plot_housing=renderPlotly({
-    p <- input$map_shape_click$id
-    if(is.null(p)){p=income_merged()$GEOID[1]}
-    data <- hhs_df()[which(hhs_df()$GEOID == p),]
-    data <- data[-c(1)]
-    
-    melted <- melt(data, id.vars = "ownership")
-    
-    #melted %>% 
-    #  ggplot(aes(x=variable, y=value, fill = ownership)) + geom_col(position = "dodge") + 
-    #  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
-    #  scale_fill_manual(values = c("#9F79EE", "#66CDAA")) + theme_GR()
-    
-    castdata <- dcast(melted, variable~ownership)
+    output$plot=renderPlot({
+      p <- NULL
+      p <- input$map_shape_click$id
+      if(is.null(p)){p=income_merged()$GEOID[1]}
+      data <- income_merged()[c(5,11:26)] %>% subset(GEOID == p) %>% as.data.frame()
+      data[c(3:17)] <- data[c(3:17)] / data$total
+      data <- data[-c(1,2)] %>% t() %>% as.data.frame()
+      colnames(data) <- c("Percentage")
+      data$bin <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999") %>% as.factor()
+      data$order <- 1:(length(data$bin))
+      
+      ggplot(data, aes(x=reorder(bin, order), y=Percentage)) + geom_col(fill = "chartreuse4") + 
+                 theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) + 
+                 theme_GR()
+      #data$order <- 1:(length(data$bin))
+      
+      #data %>% 
+      #  plot_ly(x=~reorder(bin, order), y=~Percentage, type="bar", name="Income")
+    })
     
     
-    plot_ly(castdata, x= ~variable, y= ~Owner, type='bar', name="Owner") %>%
-      add_trace(y= ~Renter, name= "Renter" ) %>% 
-      layout(yaxis = list(title = 'Count'), barmode = 'group')
+    output$plot_education=renderPlot({
+      p <- NULL
+      p <- input$map_shape_click$id
+      if(is.null(p)){p=income_merged()$GEOID[1]}
+      data <- NULL
+      data <- edu_df()[which(edu_df()$GEOID == p),]
+      data <- data[-c(1)]
+      
+      melted <- NULL
+      melted <- melt(data, id.vars = "gender")
+      
+      ggplot(melted, aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
+                 theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
+                 scale_fill_manual(values = c("pink", "steelblue1")) + theme_GR()
+      
+    })
+    
+    output$plot_housing=renderPlot({
+      p <- NULL
+      p <- input$map_shape_click$id
+      if(is.null(p)){p=income_merged()$GEOID[1]}
+      data <- hhs_df()[unique(which(hhs_df()$GEOID == p)),]
+      data <- data[-c(1)]
+      
+      melted <- melt(data, id.vars = "ownership")
+      
+      ggplot(melted, aes(x=variable, y=value, fill = ownership)) + geom_col(position = "dodge") + 
+                 theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
+                 scale_fill_manual(values = c("orange", "purple")) + theme_GR()
+    })
+    
+    
+    
+    
+    
+    
   })
   
  
