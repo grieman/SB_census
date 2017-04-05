@@ -9,7 +9,6 @@ library(magrittr)
 library(ggplot2)
 library(plotly)
 
-
 statedfs <- list()
 for (i in 1:50){
   statedfs[[i]] <- list_counties(state.abb[i])
@@ -36,10 +35,8 @@ Body <- dashboardBody(
     column(width=4,plotOutput("plot")),
     column(width=4,plotOutput("plot_education")),
     column(width=4,plotOutput("plot_housing"))
-  )
+  ),
+  actionButton("classification", "Find Similar Tracts")
 )
-
-
-
 
 dashboardPage(Header, Sidebar, Body)

@@ -17,7 +17,6 @@ theme_GR <- function(){
                  legend.direction = 'horizontal', legend.position = 'bottom')
 }
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   
   progress <- shiny::Progress$new()
@@ -33,6 +32,7 @@ shinyServer(function(input, output, session) {
     states <- counties %>% strsplit(", ") %>% lapply('[[',2) %>% unlist()
     counties %<>% strsplit(", ") %>% lapply('[[',1) %>% unlist()
     countiesdf <- data.frame(counties, states)
+    countiesdf$counties %<>% paste("County", sep=" ")
     
     split_counties <- split(countiesdf, countiesdf$states)
     
@@ -49,6 +49,7 @@ shinyServer(function(input, output, session) {
       states <- counties %>% strsplit(", ") %>% lapply('[[',2) %>% unlist()
       counties %<>% strsplit(", ") %>% lapply('[[',1) %>% unlist()
       countiesdf <- data.frame(counties, states)
+      countiesdf$counties %<>% paste("County", sep=" ")
       
       split_counties <- split(countiesdf, countiesdf$states)
       
@@ -71,7 +72,6 @@ shinyServer(function(input, output, session) {
   
   income_df <- eventReactive(input$GetData, {
     geodata <- geodata(); spatialdata <- spatialdata();
-    #change data to change data's year
     income <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B19001", col.names = "pretty")
     progress$inc(.3, detail = paste("Income data gathered"))
   
@@ -151,12 +151,30 @@ shinyServer(function(input, output, session) {
   
   income_merged <- eventReactive(input$GetData, {
     spatialdata <- spatialdata(); income_df2 <- income_df()
-    #income_df2 <- select(income_df, c(1,2,19))
     rownames(income_df2)<-1:nrow(income_df2)
     names(income_df2)[c(1,2,19)] <-c("GEOID", "total", "over_150")
     income_df2$percent <- 100*(income_df2$over_150/income_df2$total)
     income_merged<- geo_join(spatialdata, income_df2, "GEOID", "GEOID")
     income_merged[income_merged$ALAND>0,]  
+  })
+  
+  alldata <- eventReactive(input$classification, {
+    data <- income_merged()[c(5,11:26)] %>% as.data.frame()
+    data[c(3:17)] <- data[c(3:17)] / data$total
+    data <- data[-c(2)]
+    colnames(data)[2:16] <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999")
+  
+    edu_dfs <- split(edu_df[1:8], edu_df$gender)
+    colnames(edu_dfs[[1]])[2:8] <- paste("F",colnames(edu_dfs[[1]])[2:8], sep="_")
+    colnames(edu_dfs[[2]])[2:8] <- paste("M",colnames(edu_dfs[[2]])[2:8], sep="_")
+    edu_df2 <- left_join(edu_dfs[[1]], edu_dfs[[2]])
+    
+    hhs_df <- split(hhs_df[1:8], hhs_df$ownership)
+    colnames(hhs_df[[1]])[2:8] <- paste("O",colnames(hhs_df[[1]])[2:8], sep="_")
+    colnames(hhs_df[[2]])[2:8] <- paste("R",colnames(hhs_df[[2]])[2:8], sep="_")
+    hhs_df2 <- left_join(hhs_df[[1]], hhs_df[[2]])
+    
+    alldata <- left_join(left_join(data, edu_df2), hhs_df2)
   })
   
   popup <- eventReactive(input$GetData, {
@@ -181,16 +199,12 @@ shinyServer(function(input, output, session) {
       addProviderTiles("CartoDB.Positron") %>%
       addPolygons(data = income_merged(), 
                   fillColor = ~pal()(percent), 
-                  color = "#b2aeae", # you need to use hex colors
+                  color = "#b2aeae",
                   fillOpacity = 0.6, 
                   weight = 1, 
                   smoothFactor = 0.2,
-                  popup = popup(), layerId = income_merged()$GEOID) #%>%
-      #addLegend(pal = pal(), 
-      #          values = income_merged()$percent, 
-      #          position = "bottomright", 
-      #          title = "Percent of Households<br>above $150k",
-      #          labFormat = labelFormat(suffix = "%"))
+                  highlightOptions = highlightOptions(color = "white", weight = 2,bringToFront = TRUE),
+                  popup = popup(), layerId = income_merged()$GEOID)
   })
   
   observeEvent(input$map_shape_click, { # update the location selectInput on map clicks
@@ -208,12 +222,7 @@ shinyServer(function(input, output, session) {
       ggplot(data, aes(x=reorder(bin, order), y=Percentage)) + geom_col(fill = "chartreuse4") + 
                  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) + 
                  theme_GR()
-      #data$order <- 1:(length(data$bin))
-      
-      #data %>% 
-      #  plot_ly(x=~reorder(bin, order), y=~Percentage, type="bar", name="Income")
     })
-    
     
     output$plot_education=renderPlot({
       p <- NULL
@@ -229,7 +238,6 @@ shinyServer(function(input, output, session) {
       ggplot(melted, aes(x=variable, y=value, fill = gender)) + geom_col(position = "dodge") + 
                  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
                  scale_fill_manual(values = c("pink", "steelblue1")) + theme_GR()
-      
     })
     
     output$plot_housing=renderPlot({
@@ -245,20 +253,8 @@ shinyServer(function(input, output, session) {
                  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
                  scale_fill_manual(values = c("orange", "purple")) + theme_GR()
     })
-    
-    
-    
-    
-    
-    
   })
   
- 
   session$onSessionEnded(stopApp)  
    
 })
-
-
-
-# household size
-# hhs <- acs.fetch(endyear = 2015, span = 5, geography = geodata, table.number = "B25010", col.names = "pretty")
