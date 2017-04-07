@@ -1,9 +1,0 @@
-{
-    "path" : "~/CensusData",
-    "sortOrder" : [
-        {
-            "ascending" : true,
-            "columnIndex" : 2
-        }
-    ]
-}
