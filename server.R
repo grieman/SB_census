@@ -9,6 +9,8 @@ library(ggplot2)
 library(reshape2)
 library(plotly)
 
+api.key.install(key="34d31b0307b29367f69430db0a1f1596ac6f3dca")
+
 theme_GR <- function(){
   ggplot2::theme(axis.line = ggplot2::element_line(linetype = "solid"),
                  panel.grid.major = ggplot2::element_line(colour = "gray80"),
@@ -26,6 +28,7 @@ shinyServer(function(input, output, session) {
     progress$set(message = "Getting data", value = 0)
   })
   
+  distances <- eventReactive(input$GetData, {distances = NULL})
   
   spatialdata <- eventReactive(input$GetData, {
     counties <- input$counties
@@ -157,28 +160,9 @@ shinyServer(function(input, output, session) {
     income_merged<- geo_join(spatialdata, income_df2, "GEOID", "GEOID")
     income_merged[income_merged$ALAND>0,]  
   })
-  
-  alldata <- eventReactive(input$classification, {
-    data <- income_merged()[c(5,11:26)] %>% as.data.frame()
-    data[c(3:17)] <- data[c(3:17)] / data$total
-    data <- data[-c(2)]
-    colnames(data)[2:16] <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999")
-  
-    edu_dfs <- split(edu_df[1:8], edu_df$gender)
-    colnames(edu_dfs[[1]])[2:8] <- paste("F",colnames(edu_dfs[[1]])[2:8], sep="_")
-    colnames(edu_dfs[[2]])[2:8] <- paste("M",colnames(edu_dfs[[2]])[2:8], sep="_")
-    edu_df2 <- left_join(edu_dfs[[1]], edu_dfs[[2]])
-    
-    hhs_df <- split(hhs_df[1:8], hhs_df$ownership)
-    colnames(hhs_df[[1]])[2:8] <- paste("O",colnames(hhs_df[[1]])[2:8], sep="_")
-    colnames(hhs_df[[2]])[2:8] <- paste("R",colnames(hhs_df[[2]])[2:8], sep="_")
-    hhs_df2 <- left_join(hhs_df[[1]], hhs_df[[2]])
-    
-    alldata <- left_join(left_join(data, edu_df2), hhs_df2)
-  })
-  
+
   popup <- eventReactive(input$GetData, {
-    paste0("GEOID: ", income_merged()$GEOID, "<br>", "Percent of Households above $150k: ", round(income_merged()$percent,2))
+      paste0("GEOID: ", income_merged()$GEOID, "<br>", "Percent of Households above $150k: ", round(income_merged()$percent,2))
   })
   
   pal <- eventReactive(input$GetData, {
@@ -206,6 +190,7 @@ shinyServer(function(input, output, session) {
                   highlightOptions = highlightOptions(color = "white", weight = 2,bringToFront = TRUE),
                   popup = popup(), layerId = income_merged()$GEOID)
   })
+
   
   observeEvent(input$map_shape_click, { # update the location selectInput on map clicks
     output$plot=renderPlot({
@@ -216,7 +201,7 @@ shinyServer(function(input, output, session) {
       data[c(3:17)] <- data[c(3:17)] / data$total
       data <- data[-c(1,2)] %>% t() %>% as.data.frame()
       colnames(data) <- c("Percentage")
-      data$bin <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "150,000 to 199,999") %>% as.factor()
+      data$bin <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "Above 150,000") %>% as.factor()
       data$order <- 1:(length(data$bin))
       
       ggplot(data, aes(x=reorder(bin, order), y=Percentage)) + geom_col(fill = "chartreuse4") + 
@@ -253,6 +238,74 @@ shinyServer(function(input, output, session) {
                  theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
                  scale_fill_manual(values = c("orange", "purple")) + theme_GR()
     })
+  })
+  
+  
+  alldata <- eventReactive(input$GetData, {
+    income_merged <- income_merged(); edu_df <- edu_df(); hhs_df <- hhs_df()
+    data <- income_merged[c(5,11:26)] %>% as.data.frame()
+    data[c(3:17)] <- data[c(3:17)] / data$total
+    data <- data[-c(2)]
+    colnames(data)[2:16] <- c("Less than 10,000", "10,000 to 14,999","15,000 to 19,999", "20,000 to 24,999", "25,000 to 29,999", "30,000 to 34,999", "35,000 to 39,999", "40,000 to 44,999", "45,000 to 49,999", "50,000 to 59,999", "60,000 to 74,999", "75,000 to 99,999", "100,000 to 124,999", "125,000 to 149,999", "Above 150,000")
+  
+    edu_dfs <- split(edu_df[1:8], edu_df$gender)
+    colnames(edu_dfs[[1]])[2:8] <- paste("F",colnames(edu_dfs[[1]])[2:8], sep="_")
+    colnames(edu_dfs[[2]])[2:8] <- paste("M",colnames(edu_dfs[[2]])[2:8], sep="_")
+    edu_df2 <- left_join(edu_dfs[[1]], edu_dfs[[2]])
+    
+    hhs_df <- split(hhs_df[1:8], hhs_df$ownership)
+    colnames(hhs_df[[1]])[2:8] <- paste("O",colnames(hhs_df[[1]])[2:8], sep="_")
+    colnames(hhs_df[[2]])[2:8] <- paste("R",colnames(hhs_df[[2]])[2:8], sep="_")
+    hhs_df2 <- left_join(hhs_df[[1]], hhs_df[[2]])
+    
+    alldata <- left_join(left_join(data, edu_df2), hhs_df2) %>% na.omit()
+  })
+  
+  distances <- eventReactive(input$classification, {
+    alldata <- alldata()
+    distances <- NULL
+    p <- NULL
+    p <- input$map_shape_click$id
+    if(is.null(p)){p=income_merged()$GEOID[1]}
+    
+    modpca <- prcomp(alldata[-c(1)])
+    d <- dist(modpca$x[,1:min(5, length(alldata$GEOID))])
+    distances <- 1 - as.matrix(d)[which(income_merged()$GEOID == p),]
+    #scale distances
+    distances <- distances - min(distances)
+    distances <- distances/max(distances)
+    names(distances) <- alldata$GEOID
+    
+    return(distances)
+  })
+  
+  popup2 <- eventReactive(input$classification, {
+    paste0("GEOID: ", names(distances()), "<br>", "Similarity: ", round(distances(),2))
+  })
+  
+  pal2 <- eventReactive(input$classification, {
+    colorNumeric(
+      palette = "RdBu",
+      domain = distances()
+    )
+  })
+  
+  observeEvent(input$classification, {
+    req(distances())
+    req(popup2())
+    req(pal2())
+    
+    leafletProxy("map") %>%
+      clearShapes() %>%
+      addProviderTiles("CartoDB.Positron") %>%
+      addPolygons(data = income_merged(), 
+                  fillColor = ~pal2()(distances()), 
+                  color = "#b2aeae",
+                  fillOpacity = 0.6, 
+                  weight = 1, 
+                  smoothFactor = 0.2,
+                  highlightOptions = highlightOptions(color = "white", weight = 2,bringToFront = TRUE),
+                  popup = popup2(), layerId = income_merged()$GEOID)
   })
   
   session$onSessionEnded(stopApp)  

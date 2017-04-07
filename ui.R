@@ -18,25 +18,25 @@ statedf <- do.call("rbind", statedfs)
 all_counties <- paste(statedf$county, statedf$state, sep=", ")
 
 Header <- dashboardHeader(
-  
+  title = "Census Tracts"
 )
 
 Sidebar <- dashboardSidebar(
   useShinyjs(),
   selectizeInput("counties", "Select Counties:", all_counties, multiple=TRUE),
-  actionButton("GetData", "Get Data")
+  actionButton("GetData", "Get Data"),
+  actionButton("classification", "Find Similar Tracts")
 )
 
 Body <- dashboardBody(
   box(width=NULL,
-          leafletOutput("map", height="500")
+    leafletOutput("map", height="500")
   ),
   fluidRow(
     column(width=4,plotOutput("plot")),
     column(width=4,plotOutput("plot_education")),
     column(width=4,plotOutput("plot_housing"))
-  ),
-  actionButton("classification", "Find Similar Tracts")
+  )
 )
 
-dashboardPage(Header, Sidebar, Body)
+dashboardPage(Header, Sidebar, Body, skin = "green")
